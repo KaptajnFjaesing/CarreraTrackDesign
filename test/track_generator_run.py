@@ -30,7 +30,7 @@ number_of_turn_sections = 12
 number_of_straight_sections = 16
 
 # User specified sequence the track is required to begin with
-starting_sequence = "RRRRR"
+starting_sequence = "RRRR"
 
 # Generate the set of unique tracks
 track_gen.generate_unique_tracks(
@@ -44,7 +44,7 @@ track_gen.generate_unique_tracks(
 # %%
 # Generate figures of the generated tracks
 
-path = r"C:\Users\roman\Downloads\generated_tracks.png"
+path = './test/figures/generated_tracks.png'
 
 track_gen.generate_track_figures(path)
 

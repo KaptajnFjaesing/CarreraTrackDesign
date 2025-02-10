@@ -5,6 +5,7 @@ provided starting point. The intention is for the user provided starting point t
 and is re-run over and over.
 
 Notes:
+- The units of the axes in the figure is meter, meaning the figures accurately display the physical size of the different tracks. In realtion to this, note that the line, and consequently the dimensions of the track, represent the midpoint of the track. Hence, half the width of the track and potential additions should be kept in mind.
 - The model does not yet include the possibility to have the track intersect.
 
 
