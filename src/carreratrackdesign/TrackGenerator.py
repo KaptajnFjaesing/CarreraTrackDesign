@@ -12,18 +12,14 @@ class TrackGenerator:
             self,
             turn_section_radius=0.3,
             straight_section_length=0.345,
-            maximum_number_of_tacks=10,
             lap_tolerance = 0.05,
             orientation_tolerance = 0.01,
-            max_time_per_split = 10
             ):
         self.turn_section_radius = turn_section_radius
         self.straight_section_length = straight_section_length
         self.minimum_track_intersection_distance = straight_section_length*0.6
-        self.maximum_number_of_tacks = maximum_number_of_tacks
         self.lap_tolerance = lap_tolerance
         self.orientation_tolerance = orientation_tolerance
-        self.max_time_per_split = max_time_per_split
         self.unique_track_set = set()
 
     @staticmethod
@@ -86,7 +82,15 @@ class TrackGenerator:
         """Generate all valid splits of total_turns into left (L) and right (R)."""
         return [(left, number_of_turn_sections - left) for left in range(number_of_turn_sections // 2+1, number_of_turn_sections + 1)]
 
-    def generate_unique_tracks(self, starting_sequence: str, number_of_straight_sections: int, number_of_turn_sections: int):
+    def generate_unique_tracks(
+            self,
+            number_of_straight_sections: int,
+            number_of_turn_sections: int,
+            starting_sequence: str = "",
+            maximum_number_of_tacks: int = 10,
+            max_time_per_split: int = 10
+            ):
+        self.unique_track_set.clear()
         turn_splits = self.generate_turn_splits(number_of_turn_sections=number_of_turn_sections)
         all_unique_tracks = []  # Store a set for each split
 
@@ -108,7 +112,7 @@ class TrackGenerator:
             start_time = time.time()
 
             def backtrack(track_so_far, segment_counts_left, consecutive_counts):
-                if time.time() - start_time > self.max_time_per_split:  # Stop if time limit exceeded
+                if time.time() - start_time > max_time_per_split:  # Stop if time limit exceeded
                     return
                 if len(track_so_far) > 0 and self.lap_completed(track_map=track_so_far):
                     if self.check_self_intersection(self.track_coordinates(track_map=track_so_far[:-1])):
@@ -117,7 +121,7 @@ class TrackGenerator:
                             return
 
                 for segment, count in segment_counts_left.items():
-                    if len(tracks_for_split) >= self.maximum_number_of_tacks:
+                    if len(tracks_for_split) >= maximum_number_of_tacks:
                         return  
 
                     if count > 0 and consecutive_turn_condition not in track_so_far and consecutive_straight_condition not in track_so_far:
@@ -134,15 +138,19 @@ class TrackGenerator:
         if len(self.unique_track_set) == 0:
             print("No track maps could be generated given the settings.")
 
+    def get_track_set(self):
+        return self.unique_track_set
 
-
-    def generate_track_figures(self):
+    def generate_track_figures(
+            self,
+            path
+            ):
         
         if len(self.unique_track_set) > 0:
 
             # Number of columns in the subfigure layout
-            ncols = 3  
-            nrows = int(np.ceil(len(self.unique_track_set) / ncols))  # Compute number of rows dynamically
+            ncols = int(np.floor(np.sqrt(len(self.unique_track_set))))
+            nrows = int(np.ceil(len(self.unique_track_set)/ncols))
 
             fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(5 * ncols, 5 * nrows))
             axes = np.ravel(axes)  # Flatten the axes array for easier iteration
@@ -200,7 +208,8 @@ class TrackGenerator:
                 ax.axis("off")
 
             plt.tight_layout()
-            plt.show()
+            fig.savefig(path)
+            print(f"Plot saved to {path}")
         else:
             print("No track maps, run the function 'generate_unique_tracks' to yield a non empty set first.")
 
