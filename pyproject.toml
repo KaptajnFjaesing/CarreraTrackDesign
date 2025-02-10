@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "CarreraTrackDesign"
+version = "0.0.1"
+description = "A Python package that generates Carrera 1:32/1:24 slot car tracks based on user specified track sections."
+authors = ["Jonas Petersen"]
+readme = ["README.md"]
+repository = "https://github.com/KaptajnFjaesing/CarreraTrackDesign"
+packages = [{ include = "carreratrackdesign", from = "src" }]
+
+[tool.poetry.dependencies]
+python = ">=3.11.8,<3.13"
+numpy = "^1.26.4"
+spyder-kernels = "2.5"
+
+
+[build-system]
+requires = ["setuptools", "wheel", "poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
