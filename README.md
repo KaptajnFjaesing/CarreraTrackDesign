@@ -6,7 +6,6 @@ and is re-run over and over.
 
 Notes:
 - The units of the axes in the figure is meter, meaning the figures accurately display the physical size of the different tracks. In realtion to this, note that the line, and consequently the dimensions of the track, represent the midpoint of the track. Hence, half the width of the track and potential additions should be kept in mind.
-- The model does not yet include the possibility to have the track intersect.
 
 
 # Usage
@@ -20,22 +19,32 @@ Note: The initialization parameters can be omitted in practical use
       but are included here for completeness.
 """
 
-# Tolerance for checking if a lap is completed
+from carreratrackdesign.TrackGenerator import TrackGenerator
+
+# Tolerance for the lap completion (how close the track ends where it started)
 lap_tolerance = 0.05
+
+# Tolerance for the orientation (how close the track's orientation is to the starting orientation)
 orientation_tolerance = 0.01
 
-# Physical dimensions (in meters) for Carrera 1:32 and 1:24 
+# Radius of the turn sections in the track
 turn_section_radius = 0.3
+
+# Length of the straight sections in the track
 straight_section_length = 0.345
 
-# Initialize the TrackGenerator class
+# Initialize the TrackGenerator with the specified parameters
 track_gen = TrackGenerator(
-    turn_section_radius = turn_section_radius,
-    straight_section_length = straight_section_length,
-    lap_tolerance = lap_tolerance,
-    orientation_tolerance = orientation_tolerance,
-    )
+    turn_section_radius=turn_section_radius,
+    straight_section_length=straight_section_length,
+    lap_tolerance=lap_tolerance,
+    orientation_tolerance=orientation_tolerance,
+)
 ```
+```python
+2025-02-11 20:42:46,609 - INFO - TrackGenerator initialized with turn_section_radius=0.3, straight_section_length=0.345, lap_tolerance=0.05, orientation_tolerance=0.01
+```
+
 ## Generate track layouts
 ```python
 
@@ -63,27 +72,36 @@ Note: The model is not required to use all track sections, so -- unless
       generated track should include. The user can specify this as starting_sequence and re-run
       the code.
 """
-# The maximum number of tracks for a given split of turns into left/right (to control the computational load)
-maximum_number_of_tacks = 20
+# Maximum number of unique tracks to generate
+maximum_number_of_tracks = 50
 
-# The maximum time (in seconds) spent on each split of turns into left/right (to further control the computational load)
-max_time_per_split = 30
+# Maximum time allowed per split during track generation (in seconds)
+max_time_per_split = 60
 
-# User specified input of available track sections
+# Whether to allow intersections in the generated tracks
+allow_intersections = False
+
+# Number of turn sections to include in the track
 number_of_turn_sections = 12
+
+# Number of straight sections to include in the track
 number_of_straight_sections = 16
 
-# User specified sequence the track is required to begin with
-starting_sequence = "RRRR"
+# Starting sequence of the track (e.g., "RRRR" for four right turns)
+starting_sequence = "SS"
 
-# Generate the set of unique tracks
+# Generate unique tracks with the specified parameters
 track_gen.generate_unique_tracks(
-    number_of_turn_sections = number_of_turn_sections,
-    number_of_straight_sections = number_of_straight_sections,
-    starting_sequence =  starting_sequence,
-    maximum_number_of_tacks = maximum_number_of_tacks,
-    max_time_per_split = max_time_per_split
-    )
+    number_of_turn_sections=number_of_turn_sections,
+    number_of_straight_sections=number_of_straight_sections,
+    starting_sequence=starting_sequence,
+    allow_intersections=allow_intersections,
+    maximum_number_of_tracks=maximum_number_of_tracks,
+    max_time_per_split=max_time_per_split
+)
+```
+```python
+Generating Tracks: 100%|██████████| 6/6 [04:19<00:00, 43.28s/it]
 ```
 
 ## Generate track figures
@@ -92,6 +110,9 @@ track_gen.generate_unique_tracks(
 path = './test/figures/generated_tracks.png'
 
 track_gen.generate_track_figures(path)
+```
+```python
+2025-02-11 20:47:29,169 - INFO - Plot saved to ./test/figures/generated_tracks.png
 ```
 
 ![Forecasts](test/figures/generated_tracks.png)
