@@ -7,7 +7,7 @@ from tqdm import tqdm
 import time
 from shapely.geometry import LineString, Point
 import matplotlib.pyplot as plt
-from matplotlib.patches import Arc
+from matplotlib.patches import Arc, Polygon
 from matplotlib.lines import Line2D
 from typing import List, Set, Tuple
 import logging
@@ -32,6 +32,7 @@ class TrackGenerator:
         self,
         turn_section_radius: float = 0.3,
         straight_section_length: float = 0.345,
+        track_width: float = 0.198,
         lap_tolerance: float = 0.05,
         orientation_tolerance: float = 0.01,
     ) -> None:
@@ -45,6 +46,7 @@ class TrackGenerator:
         """
         self.turn_section_radius = turn_section_radius
         self.straight_section_length = straight_section_length
+        self.track_width = track_width
         self.minimum_track_intersection_distance = straight_section_length * 0.6
         self.lap_tolerance = lap_tolerance
         self.orientation_tolerance = orientation_tolerance
@@ -244,32 +246,91 @@ class TrackGenerator:
             for ax, track_map in zip(axes, list(self.unique_track_set)):
                 orientation = 0
                 position = np.array([0.0, 0.0])
-                patches = []
+                center_patches = []  # Store center lines
+                fill_patches = []  # Store filled regions
                 track_points = [position.copy()]  # Store track positions for axis limits
 
-                for section in track_map:
+                for i, section in enumerate(track_map):
                     if section == "L":
                         orientation_new = orientation + np.pi / 3
                         center = position - self.turn_section_radius * np.array([np.cos(orientation), np.sin(orientation)])
-                        patch = Arc(center, 2 * self.turn_section_radius, 2 * self.turn_section_radius, theta1=np.degrees(orientation), theta2=np.degrees(orientation_new), color='k')
-                        position += -self.turn_section_radius * (1 - np.cos(orientation_new)) + self.turn_section_radius * (1 - np.cos(orientation)), self.turn_section_radius * np.sin(orientation_new) - self.turn_section_radius * np.sin(orientation)
+                        center_patch = Arc(center, 2 * self.turn_section_radius, 2 * self.turn_section_radius, theta1=np.degrees(orientation), theta2=np.degrees(orientation_new), color='w', linestyle='dashed')
+                        # Interpolate points along the arcs
+                        theta = np.linspace(orientation, orientation_new, 20)
+                        outer_arc = center + (self.turn_section_radius + self.track_width / 2) * np.array([np.cos(theta), np.sin(theta)]).T
+                        inner_arc = center + (self.turn_section_radius - self.track_width / 2) * np.array([np.cos(theta), np.sin(theta)]).T
+                        
+                        # Combine the two arcs into a filled polygon
+                        track_fill = np.vstack([outer_arc, inner_arc[::-1]])
+                        fill_patches.append(Polygon(track_fill, closed=True, color='black'))
+
+                        position += [-self.turn_section_radius * (1 - np.cos(orientation_new)) + self.turn_section_radius * (1 - np.cos(orientation)), 
+                                    self.turn_section_radius * np.sin(orientation_new) - self.turn_section_radius * np.sin(orientation)]
                         orientation = orientation_new
+
+                        # Add red line at the end of the segment
+                        end_normal = np.array([np.cos(orientation), np.sin(orientation)])
+                        red_line_start = position - 1.2 * self.track_width / 2 * end_normal
+                        red_line_end = position + 1.2 * self.track_width / 2 * end_normal
+                        ax.plot([red_line_start[0], red_line_end[0]], [red_line_start[1], red_line_end[1]], color='red')
+
                     elif section == "R":
                         orientation_new = orientation - np.pi / 3
                         center = position + self.turn_section_radius * np.array([np.cos(orientation), np.sin(orientation)])
-                        patch = Arc(center, 2 * self.turn_section_radius, 2 * self.turn_section_radius, theta1=180 + np.degrees(orientation_new), theta2=180 + np.degrees(orientation), color='k')
-                        position += -(-self.turn_section_radius * (1 - np.cos(orientation_new)) + self.turn_section_radius * (1 - np.cos(orientation))), -(self.turn_section_radius * np.sin(orientation_new) - self.turn_section_radius * np.sin(orientation))
+                        center_patch = Arc(center, 2 * self.turn_section_radius, 2 * self.turn_section_radius, theta1=180 + np.degrees(orientation_new), theta2=180 + np.degrees(orientation), color='w', linestyle='dashed')
+                        # Interpolate points along the arcs
+                        theta = np.linspace(orientation_new, orientation, 20)+np.pi
+                        outer_arc = center + (self.turn_section_radius + self.track_width / 2) * np.array([np.cos(theta), np.sin(theta)]).T
+                        inner_arc = center + (self.turn_section_radius - self.track_width / 2) * np.array([np.cos(theta), np.sin(theta)]).T
+
+                        # Combine the two arcs into a filled polygon
+                        track_fill = np.vstack([outer_arc, inner_arc[::-1]])
+                        fill_patches.append(Polygon(track_fill, closed=True, color='black'))
+
+                        position += -(-self.turn_section_radius * (1 - np.cos(orientation_new)) + self.turn_section_radius * (1 - np.cos(orientation))), \
+                                    -(self.turn_section_radius * np.sin(orientation_new) - self.turn_section_radius * np.sin(orientation))
                         orientation = orientation_new
+
+                        # Add red line at the end of the segment
+                        end_normal = np.array([np.cos(orientation), np.sin(orientation)])
+                        red_line_start = position - 1.2 * self.track_width / 2 * end_normal
+                        red_line_end = position + 1.2 * self.track_width / 2 * end_normal
+                        ax.plot([red_line_start[0], red_line_end[0]], [red_line_start[1], red_line_end[1]], color='red')
+
                     elif section == "S":
                         start_point = position.copy()
-                        position += -self.straight_section_length * np.sin(orientation), self.straight_section_length * np.cos(orientation)
-                        patch = Line2D([start_point[0], position[0]], [start_point[1], position[1]], linewidth=1, color='k')
+                        position += [-self.straight_section_length * np.sin(orientation), self.straight_section_length * np.cos(orientation)]
+                        center_patch = Line2D([start_point[0], position[0]], [start_point[1], position[1]], linewidth=1, color='w', linestyle='dashed')
 
-                    patches.append(patch)
+                        direction = position - start_point
+                        direction_normalized = direction / np.linalg.norm(direction)  # Normalize
+
+                        # Compute normal vector (perpendicular to direction)
+                        normal = np.array([-direction_normalized[1], direction_normalized[0]])  # Rotate 90 degrees
+
+                        # Compute parallel line segment
+                        start_point1_parallel = start_point + (self.track_width / 2) * normal
+                        position1_parallel = position + (self.track_width / 2) * normal
+                        start_point2_parallel = start_point - (self.track_width / 2) * normal
+                        position2_parallel = position - (self.track_width / 2) * normal
+
+                        # Create a filled polygon for the straight segment
+                        fill_patches.append(Polygon([start_point1_parallel, position1_parallel, position2_parallel, start_point2_parallel], closed=True, color='black'))
+
+                        # Add red line at the end of the segment
+                        end_normal = np.array([np.cos(orientation), np.sin(orientation)])
+                        red_line_start = position - 1.2 * self.track_width / 2 * end_normal
+                        red_line_end = position + 1.2 * self.track_width / 2 * end_normal
+                        ax.plot([red_line_start[0], red_line_end[0]], [red_line_start[1], red_line_end[1]], color='red')
+
                     track_points.append(position.copy())
+                    center_patches.append(center_patch)
 
-                # Add patches to the subplot
-                for patch in patches:
+                # Add filled polygons to the plot
+                for patch in fill_patches:
+                    ax.add_patch(patch)
+
+                for patch in center_patches:
                     if isinstance(patch, Arc):
                         ax.add_patch(patch)
                     elif isinstance(patch, Line2D):
@@ -279,8 +340,8 @@ class TrackGenerator:
                 track_points = np.array(track_points)
                 x_min, x_max = track_points[:, 0].min(), track_points[:, 0].max()
                 y_min, y_max = track_points[:, 1].min(), track_points[:, 1].max()
-                ax.set_xlim(x_min - 0.1, x_max + 0.1)
-                ax.set_ylim(y_min - 0.1, y_max + 0.1)
+                ax.set_xlim(x_min - 0.2, x_max + 0.2)
+                ax.set_ylim(y_min - 0.2, y_max + 0.2)
 
                 ax.set_aspect('equal')
                 ax.set_xlabel('X [m]')
@@ -296,3 +357,4 @@ class TrackGenerator:
             logging.info("Plot saved to %s", path)
         else:
             logging.warning("No track maps, run the function 'generate_unique_tracks' to yield a non-empty set first.")
+

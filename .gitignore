@@ -1,3 +1,4 @@
 .venv
 .vscode
 test/debug.py
+test/debug2.py

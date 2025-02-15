@@ -13,20 +13,24 @@ turn_section_radius = 0.3
 # Length of the straight sections in the track
 straight_section_length = 0.345
 
+# Width of the track (distance between the inner and outer edges)
+track_width = 0.198
+
 # Initialize the TrackGenerator with the specified parameters
 track_gen = TrackGenerator(
     turn_section_radius=turn_section_radius,
     straight_section_length=straight_section_length,
+    track_width=track_width,
     lap_tolerance=lap_tolerance,
     orientation_tolerance=orientation_tolerance,
 )
 
 #%%
 # Maximum number of unique tracks to generate
-maximum_number_of_tracks = 50
+maximum_number_of_tracks = 20
 
 # Maximum time allowed per split during track generation (in seconds)
-max_time_per_split = 60
+max_time_per_split = 120
 
 # Whether to allow intersections in the generated tracks
 allow_intersections = False
@@ -37,7 +41,7 @@ number_of_turn_sections = 12
 # Number of straight sections to include in the track
 number_of_straight_sections = 16
 
-# Starting sequence of the track (e.g., "RRRR" for four right turns)
+# Starting sequence of the track (e.g., "SS" for two straight sections)
 starting_sequence = "SS"
 
 # Generate unique tracks with the specified parameters

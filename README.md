@@ -33,16 +33,20 @@ turn_section_radius = 0.3
 # Length of the straight sections in the track
 straight_section_length = 0.345
 
+# Width of the track (distance between the inner and outer edges)
+track_width = 0.198
+
 # Initialize the TrackGenerator with the specified parameters
 track_gen = TrackGenerator(
     turn_section_radius=turn_section_radius,
     straight_section_length=straight_section_length,
+    track_width=track_width,
     lap_tolerance=lap_tolerance,
     orientation_tolerance=orientation_tolerance,
 )
 ```
 ```python
-2025-02-11 20:42:46,609 - INFO - TrackGenerator initialized with turn_section_radius=0.3, straight_section_length=0.345, lap_tolerance=0.05, orientation_tolerance=0.01
+2025-02-15 14:49:02,036 - INFO - TrackGenerator initialized with turn_section_radius=0.3, straight_section_length=0.345, lap_tolerance=0.05, orientation_tolerance=0.01
 ```
 
 ## Generate track layouts
@@ -73,10 +77,10 @@ Note: The model is not required to use all track sections, so -- unless
       the code.
 """
 # Maximum number of unique tracks to generate
-maximum_number_of_tracks = 50
+maximum_number_of_tracks = 20
 
 # Maximum time allowed per split during track generation (in seconds)
-max_time_per_split = 60
+max_time_per_split = 120
 
 # Whether to allow intersections in the generated tracks
 allow_intersections = False
@@ -87,7 +91,7 @@ number_of_turn_sections = 12
 # Number of straight sections to include in the track
 number_of_straight_sections = 16
 
-# Starting sequence of the track (e.g., "RRRR" for four right turns)
+# Starting sequence of the track (e.g., "SS" for two straight sections)
 starting_sequence = "SS"
 
 # Generate unique tracks with the specified parameters
@@ -101,7 +105,7 @@ track_gen.generate_unique_tracks(
 )
 ```
 ```python
-Generating Tracks: 100%|██████████| 6/6 [04:19<00:00, 43.28s/it]
+Generating Tracks: 100%|██████████| 6/6 [05:03<00:00, 50.59s/it]
 ```
 
 ## Generate track figures
@@ -112,7 +116,7 @@ path = './test/figures/generated_tracks.png'
 track_gen.generate_track_figures(path)
 ```
 ```python
-2025-02-11 20:47:29,169 - INFO - Plot saved to ./test/figures/generated_tracks.png
+2025-02-15 15:03:41,917 - INFO - Plot saved to ./test/figures/generated_tracks.png
 ```
 
-![Forecasts](test/figures/generated_tracks.png)
+![generated tracks](test/figures/generated_tracks.png)
